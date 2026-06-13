@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>vulnscan — security dashboard</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">🛡️</span>
+      <div>
+        <h1>vulnscan</h1>
+        <p class="subtitle">Known vulnerabilities · vulnerable libraries · bad practices</p>
+      </div>
+    </div>
+    <div class="meta" id="generated-at"></div>
+  </header>
+
+  <main>
+    <section class="totals" id="totals" aria-label="Aggregate totals"></section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Scanned projects</h2>
+        <input type="search" id="project-filter" placeholder="Filter projects…" />
+      </div>
+      <div class="table-wrap">
+        <table id="projects-table">
+          <thead>
+            <tr>
+              <th>Project</th>
+              <th class="num crit">Critical</th>
+              <th class="num high">High</th>
+              <th class="num med">Medium</th>
+              <th class="num low">Low</th>
+              <th class="num">Total</th>
+              <th>Scanned</th>
+            </tr>
+          </thead>
+          <tbody id="projects-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel" id="findings-panel" hidden>
+      <div class="panel-head">
+        <h2 id="findings-title">Findings</h2>
+        <div class="filters" id="severity-filters"></div>
+      </div>
+      <div class="table-wrap">
+        <table id="findings-table">
+          <thead>
+            <tr>
+              <th>Severity</th>
+              <th>Title</th>
+              <th>Location</th>
+              <th>Scanner</th>
+              <th>Fix / recommendation</th>
+            </tr>
+          </thead>
+          <tbody id="findings-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <div id="empty-state" class="empty">
+      <p>No scan data found.</p>
+      <p class="hint">Run <code>python -m vulnscan.cli scan &lt;project&gt;</code> to populate <code>dashboard/data/</code>, then reload.</p>
+    </div>
+  </main>
+
+  <footer>
+    <span>vulnscan dashboard · static HTML, reads <code>data/index.json</code></span>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

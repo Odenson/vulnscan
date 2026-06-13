@@ -1,0 +1,84 @@
+{
+  "project": "sample-web-app",
+  "slug": "sample-web-app",
+  "project_path": "/home/user/projects/sample-web-app",
+  "scanned_at": "2026-06-13T10:30:00+00:00",
+  "duration_seconds": 4.21,
+  "scanners_run": ["dependency-audit", "bad-practices", "secrets"],
+  "summary": { "critical": 2, "high": 3, "medium": 2, "low": 1, "info": 0, "total": 8 },
+  "errors": [],
+  "findings": [
+    {
+      "scanner": "secrets", "severity": "critical",
+      "title": "AWS access key ID",
+      "description": "Potential secret: AKIA…7K (20 chars)",
+      "file": "config/settings.py", "line": 14,
+      "vulnerability_id": "aws-access-key",
+      "recommendation": "Remove the secret from source, rotate it immediately, and load it from an environment variable or secret manager.",
+      "references": []
+    },
+    {
+      "scanner": "dependency-audit", "severity": "critical",
+      "title": "flask 0.12.2 - GHSA-5wv5-4vpf-pj6m",
+      "description": "Flask before 1.0 has a denial of service / request smuggling issue.",
+      "file": "requirements.txt", "package": "flask", "version": "0.12.2",
+      "vulnerability_id": "GHSA-5wv5-4vpf-pj6m", "fixed_version": "1.0",
+      "recommendation": "Upgrade flask to 1.0 or later.",
+      "references": ["https://osv.dev/vulnerability/GHSA-5wv5-4vpf-pj6m"]
+    },
+    {
+      "scanner": "dependency-audit", "severity": "high",
+      "title": "requests 2.19.0 - CVE-2018-18074",
+      "description": "requests before 2.20.0 sends an HTTP Authorization header to a redirected http URL.",
+      "file": "requirements.txt", "package": "requests", "version": "2.19.0",
+      "vulnerability_id": "CVE-2018-18074", "fixed_version": "2.20.0",
+      "recommendation": "Upgrade requests to 2.20.0 or later.",
+      "references": ["https://osv.dev/vulnerability/GHSA-x84v-xcm2-53pg"]
+    },
+    {
+      "scanner": "bad-practices", "severity": "high",
+      "title": "subprocess called with shell=True",
+      "description": "`subprocess.run(cmd, shell=True)`",
+      "file": "app/utils.py", "line": 88,
+      "vulnerability_id": "py-shell-true",
+      "recommendation": "Pass an argument list and shell=False to avoid command injection.",
+      "references": []
+    },
+    {
+      "scanner": "bad-practices", "severity": "high",
+      "title": "TLS certificate verification disabled",
+      "description": "`requests.get(url, verify=False)`",
+      "file": "app/client.py", "line": 31,
+      "vulnerability_id": "tls-verify-off",
+      "recommendation": "Re-enable certificate verification; disabling it allows MITM attacks.",
+      "references": []
+    },
+    {
+      "scanner": "bad-practices", "severity": "medium",
+      "title": "Unsafe yaml.load()",
+      "description": "`config = yaml.load(open(path))`",
+      "file": "app/config.py", "line": 12,
+      "vulnerability_id": "py-yaml-load",
+      "recommendation": "Use yaml.safe_load() to avoid arbitrary object construction.",
+      "references": []
+    },
+    {
+      "scanner": "dependency-audit", "severity": "medium",
+      "title": "jinja2 2.10 - CVE-2019-10906",
+      "description": "Jinja2 before 2.10.1 has a sandbox escape via str.format_map.",
+      "file": "requirements.txt", "package": "jinja2", "version": "2.10",
+      "vulnerability_id": "CVE-2019-10906", "fixed_version": "2.10.1",
+      "recommendation": "Upgrade jinja2 to 2.10.1 or later.",
+      "references": ["https://osv.dev/vulnerability/GHSA-462w-v97r-4m45"]
+    },
+    {
+      "scanner": "bad-practices", "severity": "low",
+      "title": "Weak hash algorithm (MD5/SHA1)",
+      "description": "`token = hashlib.md5(data).hexdigest()`",
+      "file": "app/auth.py", "line": 57,
+      "vulnerability_id": "py-md5",
+      "recommendation": "Use SHA-256+ for integrity, and a KDF (bcrypt/argon2) for passwords.",
+      "references": []
+    }
+  ]
+}

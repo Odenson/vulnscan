@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+env/
+
+# Test / tooling
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Scan output (generated reports). Keep the two committed samples.
+dashboard/data/*.json
+!dashboard/data/index.json
+!dashboard/data/sample-web-app.json
+!dashboard/data/internal-api.json
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

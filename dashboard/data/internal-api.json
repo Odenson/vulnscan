@@ -1,0 +1,48 @@
+{
+  "project": "internal-api",
+  "slug": "internal-api",
+  "project_path": "/home/user/projects/internal-api",
+  "scanned_at": "2026-06-12T16:05:00+00:00",
+  "duration_seconds": 2.84,
+  "scanners_run": ["dependency-audit", "bad-practices", "secrets"],
+  "summary": { "critical": 0, "high": 1, "medium": 1, "low": 2, "info": 0, "total": 4 },
+  "errors": [],
+  "findings": [
+    {
+      "scanner": "dependency-audit", "severity": "high",
+      "title": "lodash 4.17.11 - CVE-2019-10744",
+      "description": "Versions of lodash before 4.17.12 are vulnerable to prototype pollution.",
+      "file": "package.json", "package": "lodash", "version": "4.17.11",
+      "vulnerability_id": "CVE-2019-10744", "fixed_version": "4.17.12",
+      "recommendation": "Upgrade lodash to 4.17.12 or later.",
+      "references": ["https://osv.dev/vulnerability/GHSA-jf85-cpcp-j695"]
+    },
+    {
+      "scanner": "bad-practices", "severity": "medium",
+      "title": "Direct innerHTML assignment (possible XSS)",
+      "description": "`el.innerHTML = userInput`",
+      "file": "src/render.js", "line": 42,
+      "vulnerability_id": "js-inner-html",
+      "recommendation": "Use textContent or a sanitizer; avoid injecting unescaped HTML.",
+      "references": []
+    },
+    {
+      "scanner": "bad-practices", "severity": "low",
+      "title": "child_process.exec() with shell",
+      "description": "`child_process.exec(`ping ${host}`)`",
+      "file": "src/net.js", "line": 19,
+      "vulnerability_id": "js-child-process",
+      "recommendation": "Prefer execFile/spawn with an argument array to avoid command injection.",
+      "references": []
+    },
+    {
+      "scanner": "secrets", "severity": "low",
+      "title": "Hardcoded credential in assignment",
+      "description": "Potential secret: dGVz…29 (16 chars)",
+      "file": "src/db.js", "line": 7,
+      "vulnerability_id": "generic-assignment",
+      "recommendation": "Remove the secret from source, rotate it immediately, and load it from an environment variable or secret manager.",
+      "references": []
+    }
+  ]
+}
