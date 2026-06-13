@@ -1,22 +1,44 @@
 {
-  "generated_at": "2026-06-13T05:55:36.762192+00:00",
+  "generated_at": "2026-06-13T06:06:13.992282+00:00",
   "projects": [
     {
       "slug": "sample-web-app",
       "project": "sample-web-app",
       "project_path": "/home/user/projects/sample-web-app",
       "scanned_at": "2026-06-13T10:30:00+00:00",
-      "summary": { "critical": 2, "high": 3, "medium": 2, "low": 1, "info": 0, "total": 8 },
-      "scanners_run": ["dependency-audit", "bad-practices", "secrets"],
+      "summary": {
+        "critical": 2,
+        "high": 3,
+        "medium": 2,
+        "low": 1,
+        "info": 0,
+        "total": 8
+      },
+      "scanners_run": [
+        "dependency-audit",
+        "bad-practices",
+        "secrets"
+      ],
       "data_file": "sample-web-app.json"
     },
     {
       "slug": "vulnscan",
       "project": "vulnscan",
       "project_path": "/home/runner/work/vulnscan/vulnscan",
-      "scanned_at": "2026-06-13T05:55:36.762192+00:00",
-      "summary": { "critical": 2, "high": 8, "medium": 7, "low": 1, "info": 0, "total": 18 },
-      "scanners_run": ["dependency-audit", "bad-practices", "secrets"],
+      "scanned_at": "2026-06-13T06:06:13.992282+00:00",
+      "summary": {
+        "critical": 2,
+        "high": 8,
+        "medium": 7,
+        "low": 1,
+        "info": 0,
+        "total": 18
+      },
+      "scanners_run": [
+        "dependency-audit",
+        "bad-practices",
+        "secrets"
+      ],
       "data_file": "vulnscan.json"
     },
     {
@@ -24,8 +46,19 @@
       "project": "internal-api",
       "project_path": "/home/user/projects/internal-api",
       "scanned_at": "2026-06-12T16:05:00+00:00",
-      "summary": { "critical": 0, "high": 1, "medium": 1, "low": 2, "info": 0, "total": 4 },
-      "scanners_run": ["dependency-audit", "bad-practices", "secrets"],
+      "summary": {
+        "critical": 0,
+        "high": 1,
+        "medium": 1,
+        "low": 2,
+        "info": 0,
+        "total": 4
+      },
+      "scanners_run": [
+        "dependency-audit",
+        "bad-practices",
+        "secrets"
+      ],
       "data_file": "internal-api.json"
     }
   ]

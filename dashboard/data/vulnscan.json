@@ -1,8 +1,8 @@
 {
   "project": "vulnscan",
   "project_path": "/home/runner/work/vulnscan/vulnscan",
-  "scanned_at": "2026-06-13T05:55:36.762192+00:00",
-  "duration_seconds": 0.038,
+  "scanned_at": "2026-06-13T06:06:13.992282+00:00",
+  "duration_seconds": 0.045,
   "scanners_run": [
     "dependency-audit",
     "bad-practices",
