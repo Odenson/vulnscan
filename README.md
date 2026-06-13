@@ -80,8 +80,12 @@ python -m vulnscan.cli scan ../some-project
 
 ## View the dashboard
 
-After a scan, open the dashboard. Because it fetches JSON, serve it over HTTP
-(opening the file directly is blocked by browser CORS rules):
+Each scan writes a `dashboard/data/findings.js` bundle, so you can just **open
+`dashboard/index.html` directly in your browser** (double-click it) — no server
+required.
+
+If you prefer to serve it over HTTP (e.g. to view the committed sample JSON on a
+fresh clone, before running a scan), that also works:
 
 ```bash
 cd dashboard
@@ -89,9 +93,9 @@ python -m http.server 8000
 # then open http://localhost:8000
 ```
 
-The dashboard shows aggregate totals, a sortable/filterable list of scanned
-projects, and per-project findings with severity filters. It ships with sample
-data so it renders before your first scan.
+The dashboard shows aggregate totals, a filterable list of scanned projects, and
+per-project findings with severity filters. It ships with sample data so it
+renders before your first scan.
 
 ## Run via Claude Code (skills)
 

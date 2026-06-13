@@ -21,6 +21,10 @@ dashboard/data/*.json
 !dashboard/data/sample-web-app.json
 !dashboard/data/internal-api.json
 
+# Generated dashboard bundle (may contain private scan data). Regenerated on
+# every scan; the dashboard falls back to fetching JSON when it's absent.
+dashboard/data/findings.js
+
 # OS / editor
 .DS_Store
 Thumbs.db

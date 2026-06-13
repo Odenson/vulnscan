@@ -16,6 +16,25 @@ async function loadJSON(path) {
   return res.json();
 }
 
+// Load all scan data. Prefers the inlined `data/findings.js` bundle (works from
+// file:// — no server needed); falls back to fetching JSON when served over HTTP.
+async function loadData() {
+  if (window.VULNSCAN_DATA && Array.isArray(window.VULNSCAN_DATA.projects)) {
+    return window.VULNSCAN_DATA;
+  }
+  const index = await loadJSON("data/index.json");
+  const projects = [];
+  for (const entry of index.projects || []) {
+    try {
+      projects.push(await loadJSON(`data/${entry.data_file}`));
+    } catch (e) {
+      // Keep the summary-only entry so the project still lists.
+      projects.push({ ...entry, findings: [] });
+    }
+  }
+  return { generated_at: index.generated_at, projects };
+}
+
 function fmtDate(iso) {
   if (!iso) return "—";
   const d = new Date(iso);
@@ -57,7 +76,7 @@ function renderProjects(filter = "") {
     .map((p) => {
       const s = p.summary || {};
       const active = p.slug === state.activeSlug ? "active" : "";
-      return `<tr class="project-row ${active}" data-slug="${p.slug}" data-file="${p.data_file}">
+      return `<tr class="project-row ${active}" data-slug="${p.slug}">
         <td><strong>${escapeHtml(p.project)}</strong><br><span class="loc">${escapeHtml(p.project_path || "")}</span></td>
         ${cell(s.critical, "crit")}${cell(s.high, "high")}${cell(s.medium, "med")}${cell(s.low, "low")}
         <td class="num">${s.total || 0}</td>
@@ -68,24 +87,19 @@ function renderProjects(filter = "") {
   body.innerHTML = rows || `<tr><td colspan="7" class="count-0">No matching projects.</td></tr>`;
 
   body.querySelectorAll(".project-row").forEach((row) => {
-    row.addEventListener("click", () => openProject(row.dataset.slug, row.dataset.file));
+    row.addEventListener("click", () => openProject(row.dataset.slug));
   });
 }
 
-async function openProject(slug, file) {
+function openProject(slug) {
   state.activeSlug = slug;
-  try {
-    const data = await loadJSON(`data/${file}`);
-    state.activeFindings = data.findings || [];
-  } catch (e) {
-    state.activeFindings = [];
-  }
+  const proj = state.projects.find((p) => p.slug === slug);
+  state.activeFindings = (proj && proj.findings) || [];
   renderProjects(document.getElementById("project-filter").value);
   renderSeverityFilters();
   renderFindings();
   const panel = document.getElementById("findings-panel");
   panel.hidden = false;
-  const proj = state.projects.find((p) => p.slug === slug);
   document.getElementById("findings-title").textContent = `Findings — ${proj ? proj.project : slug}`;
   panel.scrollIntoView({ behavior: "smooth", block: "start" });
 }
@@ -149,18 +163,18 @@ function escapeHtml(s) {
 }
 
 async function init() {
-  let index;
+  let data;
   try {
-    index = await loadJSON("data/index.json");
+    data = await loadData();
   } catch (e) {
     document.getElementById("empty-state").style.display = "block";
     document.querySelectorAll(".panel, .totals").forEach((el) => (el.style.display = "none"));
     return;
   }
-  state.projects = index.projects || [];
+  state.projects = data.projects || [];
   document.getElementById("empty-state").style.display = state.projects.length ? "none" : "block";
-  document.getElementById("generated-at").textContent = index.generated_at
-    ? `Updated ${fmtDate(index.generated_at)}`
+  document.getElementById("generated-at").textContent = data.generated_at
+    ? `Updated ${fmtDate(data.generated_at)}`
     : "";
 
   renderTotals();
@@ -170,8 +184,7 @@ async function init() {
 
   // Auto-open the most recently scanned project.
   if (state.projects.length) {
-    const first = state.projects[0];
-    openProject(first.slug, first.data_file);
+    openProject(state.projects[0].slug);
   }
 }
 
