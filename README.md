@@ -1,5 +1,7 @@
 # vulnscan 🛡️
 
+[![CI](https://github.com/Odenson/vulnscan/actions/workflows/ci.yml/badge.svg)](https://github.com/Odenson/vulnscan/actions/workflows/ci.yml)
+
 Scan projects for **known vulnerabilities**, **vulnerable dependencies**, and
 **insecure coding practices** — then review the findings in a static HTML
 dashboard.
@@ -112,6 +114,19 @@ The CLI, registry, and dashboard pick it up automatically.
 python -m pip install -e ".[dev]"
 pytest
 ```
+
+## Continuous integration
+
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs on every push and PR:
+
+1. **Tests** — `pytest` across Python 3.9, 3.11, and 3.13.
+2. **Self-scan** (push to `main` only) — runs vulnscan against this repo,
+   uploads the report as a build artifact, and commits the refreshed base
+   report (`dashboard/data/vulnscan.json` + `index.json`) back to the repo so
+   the dashboard always has live data to render.
+
+The self-scan commit is tagged `[skip ci]` and the trigger ignores
+`dashboard/data/**`, so the bot's own commit never re-triggers the workflow.
 
 ## Caveats
 

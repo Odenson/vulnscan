@@ -1,0 +1,88 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    # Don't re-trigger on the bot's own report commit (it touches only data).
+    paths-ignore:
+      - "dashboard/data/**"
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  test:
+    name: Tests (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.9", "3.11", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install (with dev deps)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Run tests
+        run: pytest -q
+
+  self-scan:
+    name: Self-scan & publish base report
+    needs: test
+    runs-on: ubuntu-latest
+    # Only commit the report on pushes to main (not on PRs / forks).
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+
+      - name: Run self-scan
+        # Scans this repo; writes dashboard/data/vulnscan.json + index.json,
+        # plus a standalone report. Never fails the build on findings.
+        run: vulnscan scan . --no-color --json self-scan-report.json
+
+      - name: Upload report artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: self-scan-report
+          path: |
+            self-scan-report.json
+            dashboard/data/
+          if-no-files-found: error
+
+      - name: Commit base report back to repo
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # vulnscan.json is gitignored by default; force-add so the dashboard
+          # always has a real base report committed.
+          git add -f dashboard/data/vulnscan.json dashboard/data/index.json
+          if git diff --cached --quiet; then
+            echo "No report changes to commit."
+          else
+            git commit -m "ci: refresh self-scan base report [skip ci]"
+            git push
+          fi
