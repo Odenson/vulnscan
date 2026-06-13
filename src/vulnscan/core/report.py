@@ -43,6 +43,55 @@ def write_result(result: ScanResult, data_dir: str | Path = DEFAULT_DATA_DIR) ->
     return project_file
 
 
+def load_projects(data_dir: str | Path = DEFAULT_DATA_DIR) -> list[dict]:
+    """Return the list of scanned-project entries from ``index.json`` (or [])."""
+    index_file = Path(data_dir) / "index.json"
+    if not index_file.exists():
+        return []
+    try:
+        return json.loads(index_file.read_text(encoding="utf-8")).get("projects", [])
+    except (json.JSONDecodeError, OSError):
+        return []
+
+
+def remove_project(target: str, data_dir: str | Path = DEFAULT_DATA_DIR) -> list[str]:
+    """Hard-delete scanned project(s) matching ``target`` (by slug or name).
+
+    Deletes each matched project's data file, drops it from ``index.json``, and
+    regenerates the dashboard bundle. Returns the slugs that were removed (empty
+    if nothing matched).
+    """
+    data_dir = Path(data_dir)
+    projects = load_projects(data_dir)
+    if not projects:
+        return []
+
+    target_slug = _slug(target)
+    target_lower = target.lower()
+
+    def matches(entry: dict) -> bool:
+        return (
+            entry.get("slug", "") == target_slug
+            or entry.get("project", "").lower() == target_lower
+        )
+
+    removed = [e for e in projects if matches(e)]
+    if not removed:
+        return []
+
+    for entry in removed:
+        data_file = data_dir / entry.get("data_file", f"{entry.get('slug', '')}.json")
+        try:
+            data_file.unlink()
+        except FileNotFoundError:
+            pass
+
+    kept = [e for e in projects if not matches(e)]
+    _write_index(data_dir, kept)
+    _write_bundle(data_dir)
+    return [e.get("slug", "") for e in removed]
+
+
 def _write_bundle(data_dir: Path) -> None:
     """Bundle every project's full result into a file:// friendly JS global."""
     index_file = data_dir / "index.json"
@@ -69,15 +118,8 @@ def _write_bundle(data_dir: Path) -> None:
 
 
 def _update_index(data_dir: Path, slug: str, payload: dict) -> None:
-    index_file = data_dir / "index.json"
-    projects: list[dict] = []
-    if index_file.exists():
-        try:
-            projects = json.loads(index_file.read_text(encoding="utf-8")).get("projects", [])
-        except (json.JSONDecodeError, OSError):
-            projects = []
-
-    entry = {
+    projects = [p for p in load_projects(data_dir) if p.get("slug") != slug]
+    projects.append({
         "slug": slug,
         "project": payload["project"],
         "project_path": payload["project_path"],
@@ -85,13 +127,26 @@ def _update_index(data_dir: Path, slug: str, payload: dict) -> None:
         "summary": payload["summary"],
         "scanners_run": payload["scanners_run"],
         "data_file": f"{slug}.json",
-    }
+    })
+    _write_index(data_dir, projects, generated_at=payload["scanned_at"])
 
-    projects = [p for p in projects if p.get("slug") != slug]
-    projects.append(entry)
-    projects.sort(key=lambda p: p.get("scanned_at", ""), reverse=True)
 
+def _write_index(data_dir: Path, projects: list[dict], generated_at: str | None = None) -> None:
+    """Write ``index.json`` with projects sorted newest-first.
+
+    When ``generated_at`` is omitted (e.g. on removal), the existing index's
+    timestamp is preserved.
+    """
+    index_file = data_dir / "index.json"
+    if generated_at is None:
+        if index_file.exists():
+            try:
+                generated_at = json.loads(index_file.read_text(encoding="utf-8")).get("generated_at")
+            except (json.JSONDecodeError, OSError):
+                generated_at = None
+
+    projects = sorted(projects, key=lambda p: p.get("scanned_at", ""), reverse=True)
     index_file.write_text(
-        json.dumps({"generated_at": payload["scanned_at"], "projects": projects}, indent=2),
+        json.dumps({"generated_at": generated_at, "projects": projects}, indent=2),
         encoding="utf-8",
     )

@@ -76,19 +76,79 @@ function renderProjects(filter = "") {
     .map((p) => {
       const s = p.summary || {};
       const active = p.slug === state.activeSlug ? "active" : "";
-      return `<tr class="project-row ${active}" data-slug="${p.slug}">
-        <td><strong>${escapeHtml(p.project)}</strong><br><span class="loc">${escapeHtml(p.project_path || "")}</span></td>
+      const href = folderHref(p.project_path);
+      const pathHtml = href
+        ? `<a class="folder-link" href="${escapeHtml(href)}" target="_blank" rel="noopener"
+             title="Open folder (works when the dashboard is opened via file://)">📁 <span class="loc">${escapeHtml(p.project_path)}</span></a>`
+        : `<span class="loc">${escapeHtml(p.project_path || "")}</span>`;
+      return `<tr class="project-row ${active}" data-slug="${escapeHtml(p.slug)}">
+        <td><strong>${escapeHtml(p.project)}</strong><br>${pathHtml}</td>
         ${cell(s.critical, "crit")}${cell(s.high, "high")}${cell(s.medium, "med")}${cell(s.low, "low")}
         <td class="num">${s.total || 0}</td>
         <td>${fmtDate(p.scanned_at)}</td>
+        <td class="actions-col"><button class="row-remove" data-slug="${escapeHtml(p.slug)}" title="Remove '${escapeHtml(p.slug)}' from the list">✕</button></td>
       </tr>`;
     })
     .join("");
-  body.innerHTML = rows || `<tr><td colspan="7" class="count-0">No matching projects.</td></tr>`;
+  body.innerHTML = rows || `<tr><td colspan="8" class="count-0">No matching projects.</td></tr>`;
 
   body.querySelectorAll(".project-row").forEach((row) => {
     row.addEventListener("click", () => openProject(row.dataset.slug));
   });
+  body.querySelectorAll(".row-remove").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation(); // don't also open the project
+      removeProjectFromView(btn.dataset.slug);
+    });
+  });
+  body.querySelectorAll(".folder-link").forEach((link) => {
+    // Let the browser follow the file:// link, but don't also toggle findings.
+    link.addEventListener("click", (e) => e.stopPropagation());
+  });
+}
+
+// Removes a project from the current view only. The static dashboard can't
+// delete files from disk, so we surface the CLI command that makes it permanent.
+function removeProjectFromView(slug) {
+  state.projects = state.projects.filter((p) => p.slug !== slug);
+  if (state.activeSlug === slug) {
+    state.activeSlug = null;
+    state.activeFindings = [];
+    document.getElementById("findings-panel").hidden = true;
+  }
+  renderTotals();
+  renderProjects(document.getElementById("project-filter").value);
+  document.getElementById("empty-state").style.display = state.projects.length ? "none" : "block";
+  showToast(slug);
+}
+
+function showToast(slug) {
+  const toast = document.getElementById("toast");
+  const cmd = `python -m vulnscan.cli remove ${slug}`;
+  toast.innerHTML = `
+    <div class="toast-body">
+      <div class="toast-msg">Removed <strong>${escapeHtml(slug)}</strong> from the view.
+        To delete it permanently, run:</div>
+      <div class="toast-cmd"><code id="toast-code">${escapeHtml(cmd)}</code>
+        <button class="toast-copy" id="toast-copy">Copy</button></div>
+    </div>
+    <button class="toast-close" id="toast-close" title="Dismiss">✕</button>`;
+  toast.hidden = false;
+
+  document.getElementById("toast-copy").addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(cmd);
+      const btn = document.getElementById("toast-copy");
+      btn.textContent = "Copied!";
+      setTimeout(() => (btn.textContent = "Copy"), 1500);
+    } catch (e) {
+      /* clipboard may be blocked (e.g. file://) — the command is still visible */
+    }
+  });
+  document.getElementById("toast-close").addEventListener("click", () => (toast.hidden = true));
+
+  clearTimeout(showToast._timer);
+  showToast._timer = setTimeout(() => (toast.hidden = true), 12000);
 }
 
 function openProject(slug) {
@@ -160,6 +220,16 @@ function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, (c) =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])
   );
+}
+
+// Build a file:// URL for a project folder. Handles Windows (C:\...) and POSIX
+// (/home/...) paths. NOTE: browsers only follow file:// links when the page
+// itself was opened via file:// — not when served over http(s).
+function folderHref(path) {
+  if (!path) return null;
+  const fwd = String(path).replace(/\\/g, "/");
+  const encoded = encodeURI(fwd).replace(/#/g, "%23").replace(/\?/g, "%3F");
+  return /^[a-zA-Z]:/.test(fwd) ? `file:///${encoded}` : `file://${encoded}`;
 }
 
 async function init() {
