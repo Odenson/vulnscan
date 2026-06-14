@@ -1,6 +1,26 @@
 {
-  "generated_at": "2026-06-13T06:06:13.992282+00:00",
+  "generated_at": "2026-06-14T10:44:41.571677+00:00",
   "projects": [
+    {
+      "slug": "vulnscan",
+      "project": "vulnscan",
+      "project_path": "/home/runner/work/vulnscan/vulnscan",
+      "scanned_at": "2026-06-14T10:44:41.571677+00:00",
+      "summary": {
+        "critical": 5,
+        "high": 12,
+        "medium": 8,
+        "low": 1,
+        "info": 0,
+        "total": 26
+      },
+      "scanners_run": [
+        "dependency-audit",
+        "bad-practices",
+        "secrets"
+      ],
+      "data_file": "vulnscan.json"
+    },
     {
       "slug": "sample-web-app",
       "project": "sample-web-app",
@@ -20,26 +40,6 @@
         "secrets"
       ],
       "data_file": "sample-web-app.json"
-    },
-    {
-      "slug": "vulnscan",
-      "project": "vulnscan",
-      "project_path": "/home/runner/work/vulnscan/vulnscan",
-      "scanned_at": "2026-06-13T06:06:13.992282+00:00",
-      "summary": {
-        "critical": 2,
-        "high": 8,
-        "medium": 7,
-        "low": 1,
-        "info": 0,
-        "total": 18
-      },
-      "scanners_run": [
-        "dependency-audit",
-        "bad-practices",
-        "secrets"
-      ],
-      "data_file": "vulnscan.json"
     },
     {
       "slug": "internal-api",
