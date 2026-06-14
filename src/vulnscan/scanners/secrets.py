@@ -6,6 +6,7 @@ masked in the report so the dashboard JSON never stores the full secret.
 
 from __future__ import annotations
 
+import fnmatch
 import math
 import re
 from collections import Counter
@@ -66,12 +67,72 @@ def _mask(value: str) -> str:
     return f"{value[:4]}…{value[-2:]} ({len(value)} chars)"
 
 
+GENERIC_RECOMMENDATION = (
+    "Remove the secret from source, rotate it immediately, and load it from an "
+    "environment variable or secret manager."
+)
+
+
+def _is_dotenv(name: str) -> bool:
+    """True for .env / .env.local / .env.production / *.env style files."""
+    n = name.lower()
+    return n == ".env" or n.startswith(".env.") or n.endswith(".env")
+
+
+def _gitignore_patterns(project: Project) -> list[str]:
+    """Read the project's root .gitignore into a list of fnmatch patterns."""
+    try:
+        text = (project.root / ".gitignore").read_text(encoding="utf-8", errors="ignore")
+    except OSError:
+        return []
+    patterns = []
+    for raw in text.splitlines():
+        line = raw.strip()
+        if line and not line.startswith("#"):
+            patterns.append(line.lstrip("/").replace("**/", ""))
+    return patterns
+
+
+def _is_gitignored(name: str, patterns: list[str]) -> bool:
+    return any(fnmatch.fnmatch(name, p) for p in patterns)
+
+
+def _downgrade(severity: str) -> str:
+    """Lower a severity by one level, never below 'low'.
+
+    Used for secrets in a gitignored .env: lower exposure than tracked source,
+    so we de-escalate (high -> medium). We stop at 'low' rather than hiding the
+    finding, and a critical only drops to 'high' — because gitignored today does
+    not prove the secret was never committed before being ignored.
+    """
+    ladder = ["critical", "high", "medium", "low"]
+    if severity not in ladder:
+        return severity
+    return ladder[min(ladder.index(severity) + 1, len(ladder) - 1)]
+
+
+def _dotenv_recommendation(gitignored: bool) -> str:
+    base = "This is a .env file — the right place for secrets locally, not hardcoded in source. "
+    if gitignored:
+        return base + (
+            "It is covered by .gitignore (good). Confirm it was never committed before being "
+            "ignored (`git log --all -- <file>`), restrict the key's scope, and rotate it if it "
+            "was ever pushed to a remote."
+        )
+    return base + (
+        "WARNING: it is NOT covered by .gitignore — add it now so the file can't be committed. "
+        "Then check it isn't already in history (`git log --all -- <file>`), restrict the key's "
+        "scope, and rotate it if it was ever committed or pushed."
+    )
+
+
 class SecretsScanner(Scanner):
     name = "secrets"
     description = "Detects hardcoded credentials and key material in source."
 
     def scan(self, project: Project) -> list[Finding]:
         findings: list[Finding] = []
+        gi_patterns = _gitignore_patterns(project)
         for path in project.iter_files():
             if path.suffix.lower() in SKIP_SUFFIXES:
                 continue
@@ -80,6 +141,9 @@ class SecretsScanner(Scanner):
             except OSError:
                 continue
             rel = project.rel(path)
+            dotenv = _is_dotenv(path.name)
+            gitignored = _is_gitignored(path.name, gi_patterns) if dotenv else False
+            recommendation = _dotenv_recommendation(gitignored) if dotenv else GENERIC_RECOMMENDATION
             for lineno, line in enumerate(lines, 1):
                 if len(line) > 4000:
                     continue
@@ -97,15 +161,12 @@ class SecretsScanner(Scanner):
                             continue
                     findings.append(Finding(
                         scanner=self.name,
-                        severity=sev,
+                        severity=_downgrade(sev) if gitignored else sev,
                         title=title,
                         description=f"Potential secret: {_mask(matched)}",
                         file=rel,
                         line=lineno,
                         vulnerability_id=rule_id,
-                        recommendation=(
-                            "Remove the secret from source, rotate it immediately, "
-                            "and load it from an environment variable or secret manager."
-                        ),
+                        recommendation=recommendation,
                     ))
         return findings

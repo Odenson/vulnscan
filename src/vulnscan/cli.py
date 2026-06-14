@@ -6,6 +6,8 @@ Examples
     vulnscan scan ../some-project --only dependency-audit secrets
     vulnscan scan ../some-project --data-dir dashboard/data --json out.json
     vulnscan list
+    vulnscan projects
+    vulnscan remove some-project -y
 """
 
 from __future__ import annotations
@@ -17,7 +19,7 @@ from pathlib import Path
 
 from .core.models import SEVERITY_ORDER
 from .core.registry import available_scanners
-from .core.report import DEFAULT_DATA_DIR, write_result
+from .core.report import DEFAULT_DATA_DIR, load_projects, remove_project, write_result
 from .core.runner import run_scan
 
 # Exit non-zero when findings at/above this severity exist (CI gate).
@@ -39,6 +41,52 @@ def _cmd_list(_: argparse.Namespace) -> int:
     print("Available scanners:\n")
     for name, cls in sorted(available_scanners().items()):
         print(f"  {name:<18} {cls.description}")
+    return 0
+
+
+def _cmd_projects(args: argparse.Namespace) -> int:
+    projects = load_projects(args.data_dir)
+    if not projects:
+        print(f"No scanned projects in {Path(args.data_dir) / 'index.json'}.")
+        return 0
+    print(f"Scanned projects ({len(projects)}):\n")
+    print(f"  {'SLUG':<22} {'TOTAL':>5}  {'SCANNED':<26} PROJECT")
+    for p in projects:
+        total = (p.get("summary") or {}).get("total", 0)
+        print(f"  {p.get('slug', ''):<22} {total:>5}  "
+              f"{p.get('scanned_at', ''):<26} {p.get('project', '')}")
+    return 0
+
+
+def _cmd_remove(args: argparse.Namespace) -> int:
+    projects = load_projects(args.data_dir)
+    by_key = {p.get("slug", ""): p for p in projects}
+    by_key.update({p.get("project", "").lower(): p for p in projects})
+
+    removed_any = False
+    not_found = []
+    for target in args.targets:
+        entry = by_key.get(target) or by_key.get(target.lower())
+        if entry is None:
+            not_found.append(target)
+            continue
+        slug = entry.get("slug", target)
+        if not args.yes and sys.stdin.isatty():
+            data_file = entry.get("data_file", f"{slug}.json")
+            answer = input(f"Remove '{slug}' and delete {data_file}? [y/N] ").strip().lower()
+            if answer not in ("y", "yes"):
+                print(f"skipped: {slug}")
+                continue
+        removed = remove_project(target, args.data_dir)
+        for s in removed:
+            print(f"removed: {s}")
+            removed_any = True
+
+    for target in not_found:
+        print(f"not found: {target}", file=sys.stderr)
+
+    if not_found and not removed_any:
+        return 1
     return 0
 
 
@@ -117,6 +165,23 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_list = sub.add_parser("list", help="List available scanners.")
     p_list.set_defaults(func=_cmd_list)
+
+    p_projects = sub.add_parser("projects", help="List scanned projects in the report.")
+    p_projects.add_argument("--data-dir", default=str(DEFAULT_DATA_DIR),
+                            help="Dashboard data directory (default: dashboard/data).")
+    p_projects.set_defaults(func=_cmd_projects)
+
+    p_remove = sub.add_parser(
+        "remove",
+        help="Remove scanned project(s) from the report (hard delete).",
+    )
+    p_remove.add_argument("targets", nargs="+", metavar="NAME_OR_SLUG",
+                          help="Project name(s) or slug(s) to remove.")
+    p_remove.add_argument("--data-dir", default=str(DEFAULT_DATA_DIR),
+                          help="Dashboard data directory (default: dashboard/data).")
+    p_remove.add_argument("-y", "--yes", action="store_true",
+                          help="Skip the confirmation prompt.")
+    p_remove.set_defaults(func=_cmd_remove)
 
     return parser
 

@@ -70,7 +70,24 @@ vulnscan scan ../some-project --fail-on high
 
 # Also emit a standalone JSON file
 vulnscan scan ../some-project --json report.json
+
+# List scanned projects in the dashboard report
+vulnscan projects
+
+# Remove scanned project(s) from the report (hard delete; -y skips the prompt)
+vulnscan remove some-project -y
 ```
+
+### Removing projects from the dashboard
+
+`vulnscan remove <name-or-slug>` permanently deletes a project's data file,
+drops it from `index.json`, and regenerates the bundle. Use `vulnscan projects`
+to see the available slugs.
+
+The dashboard also has a **✕ button** on each project row. Because the page is
+static, that button removes the project from the *current view* only and shows
+the exact `vulnscan remove …` command (with a Copy button) to make it
+permanent — reloading restores the row until you run the command.
 
 If you haven't `pip install`ed, the same works via the module:
 
@@ -96,6 +113,12 @@ python -m http.server 8000
 The dashboard shows aggregate totals, a filterable list of scanned projects, and
 per-project findings with severity filters. It ships with sample data so it
 renders before your first scan.
+
+Each project row shows its path as a **📁 folder link**. Clicking it opens the
+project folder in a new tab. Because browsers sandbox local file access, this
+only works when the dashboard is opened directly via `file://` (double-clicking
+`index.html`) — when the dashboard is served over `http://`, browsers block
+`file://` navigation and the link won't open.
 
 ## Run via Claude Code (skills)
 

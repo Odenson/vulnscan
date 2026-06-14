@@ -141,10 +141,94 @@ tbody tr.project-row.active { background: #25303d; }
 .filter-btn.active { color: var(--text); border-color: var(--accent); }
 
 .loc { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12px; color: var(--muted); }
+.folder-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  text-decoration: none;
+  border-radius: 5px;
+  padding: 1px 4px;
+  margin: -1px -4px;
+}
+.folder-link .loc { transition: color 0.12s; }
+.folder-link:hover { background: rgba(76, 141, 255, 0.12); }
+.folder-link:hover .loc { color: var(--accent); }
 .fix { color: var(--muted); }
 td a { color: var(--accent); text-decoration: none; }
 td a:hover { text-decoration: underline; }
 .vid { font-family: ui-monospace, monospace; font-size: 11px; color: var(--muted); }
+
+.actions-col { width: 36px; text-align: center; }
+.row-remove {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--muted);
+  border-radius: 6px;
+  width: 24px;
+  height: 24px;
+  line-height: 1;
+  font-size: 13px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.12s, color 0.12s, border-color 0.12s, background 0.12s;
+}
+tbody tr.project-row:hover .row-remove { opacity: 1; }
+.row-remove:hover {
+  color: var(--crit);
+  border-color: var(--crit);
+  background: rgba(255, 77, 109, 0.12);
+}
+
+.toast {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 50;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  max-width: 420px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 10px;
+  padding: 14px 14px 14px 16px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+}
+.toast[hidden] { display: none; }
+.toast-msg { font-size: 13px; margin-bottom: 8px; }
+.toast-cmd { display: flex; align-items: center; gap: 8px; }
+.toast-cmd code {
+  flex: 1;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--text);
+  overflow-x: auto;
+  white-space: nowrap;
+}
+.toast-copy {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.toast-copy:hover { filter: brightness(1.1); }
+.toast-close {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0 2px;
+}
+.toast-close:hover { color: var(--text); }
 
 .empty { text-align: center; padding: 60px 20px; color: var(--muted); }
 .empty .hint { font-size: 13px; }
