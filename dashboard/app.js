@@ -85,7 +85,7 @@ function renderProjects(filter = "") {
         <td><strong>${escapeHtml(p.project)}</strong><br>${pathHtml}</td>
         ${cell(s.critical, "crit")}${cell(s.high, "high")}${cell(s.medium, "med")}${cell(s.low, "low")}
         <td class="num">${s.total || 0}</td>
-        <td>${fmtDate(p.scanned_at)}</td>
+        <td>${escapeHtml(fmtDate(p.scanned_at))}</td>
         <td class="actions-col"><button class="row-remove" data-slug="${escapeHtml(p.slug)}" title="Remove '${escapeHtml(p.slug)}' from the list">✕</button></td>
       </tr>`;
     })
@@ -201,12 +201,13 @@ function renderFindings() {
       if (f.line) loc += `:${f.line}`;
       const vid = f.vulnerability_id ? `<div class="vid">${escapeHtml(f.vulnerability_id)}</div>` : "";
       const refs = (f.references || [])
+        .filter((r) => /^https?:\/\//i.test(r)) // only http(s); blocks javascript:/data: URLs
         .slice(0, 2)
         .map((r) => `<a href="${escapeHtml(r)}" target="_blank" rel="noopener">ref</a>`)
         .join(" ");
       const fix = [f.recommendation ? escapeHtml(f.recommendation) : "", refs].filter(Boolean).join("<br>");
       return `<tr>
-        <td><span class="badge ${f.severity}">${f.severity}</span></td>
+        <td><span class="badge ${escapeHtml(f.severity)}">${escapeHtml(f.severity)}</span></td>
         <td>${escapeHtml(f.title)}${vid}<div class="fix">${escapeHtml(f.description || "")}</div></td>
         <td class="loc">${loc}</td>
         <td>${escapeHtml(f.scanner)}</td>
