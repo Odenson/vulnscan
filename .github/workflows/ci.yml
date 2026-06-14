@@ -3,14 +3,11 @@ name: CI
 on:
   push:
     branches: [main]
-    # Don't re-trigger on the bot's own report commit (it touches only data).
-    paths-ignore:
-      - "dashboard/data/**"
   pull_request:
     branches: [main]
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -41,11 +38,9 @@ jobs:
         run: pytest -q
 
   self-scan:
-    name: Self-scan & publish base report
+    name: Self-scan (report artifact)
     needs: test
     runs-on: ubuntu-latest
-    # Only commit the report on pushes to main (not on PRs / forks).
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4
 
@@ -60,29 +55,14 @@ jobs:
           pip install -e .
 
       - name: Run self-scan
-        # Scans this repo; writes dashboard/data/vulnscan.json + index.json,
-        # plus a standalone report. Never fails the build on findings.
-        run: vulnscan scan . --no-color --json self-scan-report.json
+        # Scan this repo and emit a standalone JSON report. --no-report keeps it
+        # out of dashboard/data; the result is published as a build artifact only,
+        # never committed back to the repo.
+        run: python -m vulnscan.cli scan . --no-color --no-report --json self-scan-report.json
 
       - name: Upload report artifact
         uses: actions/upload-artifact@v4
         with:
           name: self-scan-report
-          path: |
-            self-scan-report.json
-            dashboard/data/
+          path: self-scan-report.json
           if-no-files-found: error
-
-      - name: Commit base report back to repo
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          # vulnscan.json is gitignored by default; force-add so the dashboard
-          # always has a real base report committed.
-          git add -f dashboard/data/vulnscan.json dashboard/data/index.json
-          if git diff --cached --quiet; then
-            echo "No report changes to commit."
-          else
-            git commit -m "ci: refresh self-scan base report [skip ci]"
-            git push
-          fi

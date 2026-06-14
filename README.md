@@ -147,13 +147,14 @@ pytest
 [`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs on every push and PR:
 
 1. **Tests** — `pytest` across Python 3.9, 3.11, and 3.13.
-2. **Self-scan** (push to `main` only) — runs vulnscan against this repo,
-   uploads the report as a build artifact, and commits the refreshed base
-   report (`dashboard/data/vulnscan.json` + `index.json`) back to the repo so
-   the dashboard always has live data to render.
+2. **Self-scan** — runs vulnscan against this repo and uploads the report as a
+   build artifact (downloadable from the run). It is **not** committed back to
+   the repo.
 
-The self-scan commit is tagged `[skip ci]` and the trigger ignores
-`dashboard/data/**`, so the bot's own commit never re-triggers the workflow.
+Real scan results are generated artifacts and are never committed. Only the
+synthetic demo fixtures (`sample-web-app.json`, `internal-api.json`) and the
+`index.json` listing them are tracked, so the dashboard renders out-of-the-box;
+your own scans stay local (and `findings.js` is gitignored).
 
 ## Caveats
 
