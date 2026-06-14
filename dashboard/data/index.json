@@ -1,44 +1,13 @@
 {
-  "generated_at": "2026-06-14T10:44:41.571677+00:00",
+  "generated_at": "2026-06-13T10:30:00+00:00",
   "projects": [
-    {
-      "slug": "vulnscan",
-      "project": "vulnscan",
-      "project_path": "/home/runner/work/vulnscan/vulnscan",
-      "scanned_at": "2026-06-14T10:44:41.571677+00:00",
-      "summary": {
-        "critical": 5,
-        "high": 12,
-        "medium": 8,
-        "low": 1,
-        "info": 0,
-        "total": 26
-      },
-      "scanners_run": [
-        "dependency-audit",
-        "bad-practices",
-        "secrets"
-      ],
-      "data_file": "vulnscan.json"
-    },
     {
       "slug": "sample-web-app",
       "project": "sample-web-app",
       "project_path": "/home/user/projects/sample-web-app",
       "scanned_at": "2026-06-13T10:30:00+00:00",
-      "summary": {
-        "critical": 2,
-        "high": 3,
-        "medium": 2,
-        "low": 1,
-        "info": 0,
-        "total": 8
-      },
-      "scanners_run": [
-        "dependency-audit",
-        "bad-practices",
-        "secrets"
-      ],
+      "summary": { "critical": 2, "high": 3, "medium": 2, "low": 1, "info": 0, "total": 8 },
+      "scanners_run": ["dependency-audit", "bad-practices", "secrets"],
       "data_file": "sample-web-app.json"
     },
     {
@@ -46,19 +15,8 @@
       "project": "internal-api",
       "project_path": "/home/user/projects/internal-api",
       "scanned_at": "2026-06-12T16:05:00+00:00",
-      "summary": {
-        "critical": 0,
-        "high": 1,
-        "medium": 1,
-        "low": 2,
-        "info": 0,
-        "total": 4
-      },
-      "scanners_run": [
-        "dependency-audit",
-        "bad-practices",
-        "secrets"
-      ],
+      "summary": { "critical": 0, "high": 1, "medium": 1, "low": 2, "info": 0, "total": 4 },
+      "scanners_run": ["dependency-audit", "bad-practices", "secrets"],
       "data_file": "internal-api.json"
     }
   ]

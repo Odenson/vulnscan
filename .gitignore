@@ -15,7 +15,9 @@ env/
 .coverage
 htmlcov/
 
-# Scan output (generated reports). Keep the two committed samples.
+# Scan output: real scan results are generated artifacts and are NOT committed.
+# Only the synthetic demo fixtures (so the dashboard renders out-of-the-box) and
+# the index that lists them are tracked.
 dashboard/data/*.json
 !dashboard/data/index.json
 !dashboard/data/sample-web-app.json
